@@ -1,0 +1,51 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  ##########################################
+  # Database
+  psql:
+    desc: Start a postgres shell
+    cmds:
+      - docker-compose exec postgres psql
+
+  psql-pipe:
+    desc: Start a postgres shell for piping commands into
+    cmds:
+      - docker-compose exec -T postgres psql
+
+  dump-db:
+    desc: Create a database dump. Can specify the filename with FILENAME.
+    cmds:
+      - docker-compose exec -T postgres pg_dump --format custom --compress 9 --dbname dashboard > '{{.FILENAME}}'
+    vars:
+      TIMESTAMP:
+        sh: date --utc +"%Y-%m-%dT%H:%M:%SZ"
+      DEFAULT_FILENAME: "dashboard-db-{{.TIMESTAMP}}.dump"
+      FILENAME: "{{default .DEFAULT_FILENAME .FILENAME}}"
+
+  restore-db:
+    desc: Restore a database dump. Need to specify filename with FILENAME.
+    preconditions:
+      - sh: "[[ '{{.FILENAME}}' != '<no value>' ]]"
+        msg: "FILENAME is not set"
+    cmds:
+      - docker-compose exec -T postgres pg_restore --clean --if-exists --single-transaction --dbname dashboard < '{{.FILENAME}}'
+
+  migrate-db:
+    desc: Migrates the db using "migrate"
+    cmds:
+      - task: run-migrate
+        vars:
+          CLI_ARGS: up
+
+  new-migration:
+    desc: Creates a new migration file. Can set NAME to name it.
+    cmds:
+      - migrate create -ext sql -dir migrations -seq -digits 4 '{{default "new_migration" .NAME}}'
+
+  run-migrate:
+    desc: Runs the "migrate" tool while passing on any command line arguments after --
+    cmds:
+      - migrate -database "postgresql:///?sslmode=disable" -path migrations {{.CLI_ARGS}}

@@ -1,0 +1,52 @@
+version: "3.8"
+
+volumes:
+  grafana-storage:
+  pgdata:
+
+services:
+  updater:
+    build:
+      context: updater
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - DASH_PGHOST=postgres
+      - DASH_PGPORT=5432
+      - DASH_PGDATABASE=${DASH_PGDATABASE:?err}
+      - DASH_PGUSER=${DASH_PGUSER:?err}
+      - DASH_PGPASSWORD=${DASH_PGPASSWORD:?err}
+      - AGSI_API_KEY=${AGSI_API_KEY:?err}
+    depends_on:
+      - postgres
+
+  grafana:
+    image: grafana/grafana-oss:9.3.2
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${DASH_GF_SECURITY_ADMIN_PASSWORD:?err}
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
+
+  postgres:
+    image: timescale/timescaledb-ha:pg14.6-ts2.9.1-latest
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    environment:
+      # For creating the inital database
+      - POSTGRES_DB=${DASH_PGDATABASE:?err}
+      - POSTGRES_USER=${DASH_PGUSER:?err}
+      - POSTGRES_PASSWORD=${DASH_PGPASSWORD:?err}
+      # For more convenient invocation of psql
+      - PGDATABASE=${DASH_PGDATABASE:?err}
+      - PGUSER=${DASH_PGUSER:?err}
+      - PGPASSWORD=${DASH_PGPASSWORD:?err}
+    ports:
+      # Forward ports for development and debugging. But only listen on localhost to make exposing them publicly by
+      # accident a bit harder.
+      - 127.0.0.1:5432:5432
