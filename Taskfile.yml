@@ -49,3 +49,25 @@ tasks:
     desc: Runs the "migrate" tool while passing on any command line arguments after --
     cmds:
       - migrate -database "postgresql:///?sslmode=disable" -path migrations {{.CLI_ARGS}}
+
+  # Not doing this as a migration as there is no easy access to environment variables there
+  create-readonly-postgres-user:
+    desc: Creates a readonly user called "grafana"
+    preconditions:
+      - sh: "[[ '{{.DASH_PGPASSWORD_GRAFANA}}' != '<no value>' ]]"
+        msg: "DASH_PGPASSWORD_GRAFANA is not set"
+      - sh: "[[ '{{.DASH_PGDATABASE}}' != '<no value>' ]]"
+        msg: "DASH_PGDATABASE is not set"
+    cmds:
+      - |-
+        SQL="
+          CREATE USER grafana WITH PASSWORD '$DASH_PGPASSWORD_GRAFANA';
+
+          GRANT CONNECT ON DATABASE $DASH_PGDATABASE TO grafana;
+          GRANT USAGE ON SCHEMA public TO grafana;
+          GRANT SELECT ON ALL TABLES IN SCHEMA public TO grafana;
+
+          -- Grant the SELECT privilege on all new tables
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO grafana;
+        "
+        docker-compose exec -T postgres psql --command "$SQL"
