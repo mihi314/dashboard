@@ -3,6 +3,11 @@ version: "3.8"
 volumes:
   grafana-storage:
   pgdata:
+  certs:
+    # Using the Let's Encrypt certificates form another project on the same server. (Not creating our own ones becaue
+    # Let's Encrypt requires port 80, but port 80 is already in use by that project)
+    external:
+      name: kensaku_certs
 
 services:
   updater:
@@ -50,3 +55,19 @@ services:
       # Forward ports for development and debugging. But only listen on localhost to make exposing them publicly by
       # accident a bit harder.
       - 127.0.0.1:5432:5432
+
+  nginx:
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+    volumes:
+      - certs:/etc/nginx/ssl/certs
+    restart: unless-stopped
+    environment:
+      - UIHOST=grafana
+      - UIPORT=3000
+      - DOMAIN=${DOMAIN:-localhost}
+    ports:
+      - 4000:443
+    depends_on:
+      - grafana
