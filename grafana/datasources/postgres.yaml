@@ -2,6 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: postgres
+    uid: tiyX_tTVz
     isDefault: true
     type: postgres
     url: postgres:5432
@@ -16,3 +17,4 @@ datasources:
       connMaxLifetime: 14400
       postgresVersion: 1500 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: true
+    editable: true
