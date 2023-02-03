@@ -1,4 +1,4 @@
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone
 from typing import Optional
 
 import requests
@@ -50,7 +50,7 @@ def init():
 
 
 def update():
-    now = dt.utcnow()
+    now = dt.now(timezone.utc)
     rows = []
 
     for name, url in urls.items():
