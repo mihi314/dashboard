@@ -42,7 +42,16 @@ services:
       - postgres
 
   postgres:
-    image: timescale/timescaledb:2.9.2-pg15
+    build:
+      context: postgres
+      dockerfile: Dockerfile
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      # Config options depending on the environment (the ones applying everywhere should go into the config file)
+      - -c
+      - log_statement=${DASH_PG_LOGLEVEL:-none}
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
