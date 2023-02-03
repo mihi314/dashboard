@@ -22,6 +22,7 @@ services:
       - DASH_PGUSER=${DASH_PGUSER:?err}
       - DASH_PGPASSWORD=${DASH_PGPASSWORD:?err}
       - AGSI_API_KEY=${AGSI_API_KEY:?err}
+      - WORKFLOWY_SESSION_ID=${WORKFLOWY_SESSION_ID:?err}
     depends_on:
       - postgres
 
