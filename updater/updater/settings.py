@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     ECHO_SQL: bool = Field(False, env=["ECHO_SQL", "LOG_SQL"])
 
     AGSI_API_KEY: str
+    WORKFLOWY_SESSION_ID: str
 
 
 settings = Settings()  # pyright: ignore

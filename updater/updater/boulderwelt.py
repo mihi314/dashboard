@@ -4,7 +4,7 @@ from typing import Optional
 import requests
 import sqlalchemy as sa
 
-from database import create_engine
+from updater.database import create_engine
 
 
 # Data retrieval
@@ -19,6 +19,7 @@ urls = {
 def get_level(url: str) -> Optional[float | int]:
     headers = {"User-Agent": "Private Boulderhallenfüllstandsabfrage - Kontakt: aijan.me@gmail.com"}
     request = requests.post(url, data={"action": "cxo_get_crowd_indicator"}, headers=headers)
+    request.raise_for_status()
     data = request.json()
     return data["level"] if data["success"] else None
 

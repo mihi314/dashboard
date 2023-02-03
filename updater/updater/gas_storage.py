@@ -5,8 +5,8 @@ import pandas as pd
 import requests
 import sqlalchemy as sa
 
-from database import create_engine
-from settings import settings
+from updater.database import create_engine
+from updater.settings import settings
 
 
 # Data retrieval
@@ -27,6 +27,7 @@ def get_data(since: Optional[date] = None) -> pd.DataFrame:
         params["from"] = since.isoformat()
 
     request = requests.get("https://agsi.gie.eu/api", params=params, headers={"x-key": settings.AGSI_API_KEY})
+    request.raise_for_status()
 
     # with open("data/gas.json") as f:
     #     data = json.load(f)
