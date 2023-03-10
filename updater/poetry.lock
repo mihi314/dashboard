@@ -202,6 +202,14 @@ qa = ["flake8 (==3.8.3)", "mypy (==0.782)"]
 testing = ["Django (<3.1)", "attrs", "colorama", "docopt", "pytest (<7.0.0)"]
 
 [[package]]
+name = "joblib"
+version = "1.2.0"
+description = "Lightweight pipelining with Python functions"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "lxml"
 version = "4.9.2"
 description = "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
@@ -593,7 +601,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "6b01a897d28707296e0889984c7497a936762a765dc3910d942178ba01bed066"
+content-hash = "095b5b356b4fbdefa5c61522570444520837ca58afe02dd0c582fee5d94a9698"
 
 [metadata.files]
 appnope = [
@@ -623,6 +631,7 @@ greenlet = []
 idna = []
 ipython = []
 jedi = []
+joblib = []
 lxml = []
 matplotlib-inline = []
 mypy-extensions = [

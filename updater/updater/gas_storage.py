@@ -53,7 +53,27 @@ def get_data(since: Optional[date] = None) -> pd.DataFrame:
     for column in float_columns:
         df[column] = df[column].apply(lambda value: float(value))
 
-    return df
+    # Only take a subset of the columns, in order to not break when new columns get added
+    subset_columns = [
+        "name",
+        "code",
+        "url",
+        "gasDayStart",
+        "gasInStorage",
+        "consumption",
+        "consumptionFull",
+        "injection",
+        "withdrawal",
+        "netWithdrawal",
+        "workingGasVolume",
+        "injectionCapacity",
+        "withdrawalCapacity",
+        "status",
+        "trend",
+        "full",
+        "info",
+    ]
+    return df.loc[:, subset_columns]
 
 
 # Storage
