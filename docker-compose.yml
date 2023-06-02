@@ -4,10 +4,8 @@ volumes:
   grafana-storage:
   pgdata:
   certs:
-    # Using the Let's Encrypt certificates form another project on the same server. (Not creating our own ones becaue
-    # Let's Encrypt requires port 80, but port 80 is already in use by that project)
-    external:
-      name: kensaku_certs
+  acme.sh-state:
+  acme.sh-webroot:
 
 services:
   updater:
@@ -35,7 +33,7 @@ services:
     restart: unless-stopped
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${DASH_GF_SECURITY_ADMIN_PASSWORD:?err}
-      - GF_SERVER_DOMAIN=${DOMAIN:-localhost}
+      - GF_SERVER_DOMAIN=${DASH_DOMAIN:-localhost}
       - DASH_PGPASSWORD_GRAFANA=${DASH_PGPASSWORD_GRAFANA:?err}
       - GF_DATE_FORMATS_FULL_DATE=dd DD.MM.YYYY HH:mm:ss
       - GF_DATE_FORMATS_INTERVAL_SECOND=HH:mm:ss
@@ -47,7 +45,7 @@ services:
       - GF_AUTH_LOGIN_MAXIMUM_INACTIVE_LIFETIME_DURATION=120M
       - GF_AUTH_LOGIN_MAXIMUM_LIFETIME_DURATION=120M
     ports:
-      - 3000:3000
+      - 127.0.0.1:3000:3000
     depends_on:
       - postgres
 
@@ -85,12 +83,25 @@ services:
       dockerfile: Dockerfile
     volumes:
       - certs:/etc/nginx/ssl/certs
+      - acme.sh-webroot:/var/www/acme.sh
     restart: unless-stopped
     environment:
       - GRAFANA_HOST=grafana
       - GRAFANA_PORT=3000
-      - DOMAIN=${DOMAIN:-localhost}
+      - DOMAIN=${DASH_DOMAIN:-localhost}
     ports:
-      - 4000:443
+      - 4080:80
+      - 4443:443
     depends_on:
       - grafana
+
+  # refreshes the letsencrypt certificate every 60 days
+  acme.sh:
+    image: neilpang/acme.sh:2.8.8
+    command: daemon
+    volumes:
+      # these paths are tightly coupled with the generate-initial-ssl-cert task
+      - certs:/certs
+      - acme.sh-state:/acme.sh
+      - acme.sh-webroot:/acme.sh-webroot
+    restart: unless-stopped
