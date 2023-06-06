@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID
 
 import lxml.html
-import requests
+import regex
 import sqlalchemy as sa
 from pydantic import BaseModel
 
 from updater.database import create_engine
 from updater.settings import settings
+from updater.utils import requests_get
 
 # Getting and parsing the workflowy tree
 #
@@ -82,7 +84,7 @@ class WorkflowyItem:
 
 
 def get_worklfowy_items() -> Dict[UUID, WorkflowyItem]:
-    request = requests.get(DATA_URL, headers={"cookie": f"sessionid={settings.WORKFLOWY_SESSION_ID}"})
+    request = requests_get(DATA_URL, headers={"cookie": f"sessionid={settings.WORKFLOWY_SESSION_ID}"})
     request.raise_for_status()
     data = WorkflowyData.parse_raw(request.text)
     return flatten_tree(data)
@@ -118,7 +120,7 @@ def add_children(
 def convert_node(node: Node, parent: Optional[WorkflowyItem], time_joined_s: int) -> WorkflowyItem:
     text = node.nm
     notes = node.no or ""
-    tags = set({})  # Not used/parsed currently
+    tags = find_tags(text)
 
     created_at = datetime.fromtimestamp(time_joined_s + node.ct, timezone.utc)
     modfied_at = datetime.fromtimestamp(time_joined_s + node.lm, timezone.utc)
@@ -126,7 +128,6 @@ def convert_node(node: Node, parent: Optional[WorkflowyItem], time_joined_s: int
     if parent:
         parent_completed_at = parent.completed_at
         parents = parent.parents + [parent]
-        tags |= parent.tags
     else:
         parent_completed_at = None
         parents = []
@@ -148,29 +149,48 @@ def convert_node(node: Node, parent: Optional[WorkflowyItem], time_joined_s: int
     )
 
 
+# Using regex package instead of re for better unicode class support (\p{L} and \p{Nd}).
+# Also interesting: http://unicode.org/reports/tr18/
+# The source of this regex is workflowy itself.
+WORKFLOWY_TAG_REGEX = regex.compile(
+    r"(^|\s|[(),.!?;:\/\[\]])([#@]([\p{L}\p{Nd}][\p{L}\p{Nd}\-_']*(:([\p{L}\p{Nd}][\p{L}\p{Nd}\-_']*))*))(?=$|\s|[(),.!?;:\/\[\]])"
+)
+WORKFLOWY_NOT_TAG_REGEX = regex.compile(r"^[0-9]{1,3}$")
+
+
+def find_tags(text: str) -> Set[str]:
+    """Find all tags in text that workflowy considers a tag"""
+    matches = WORKFLOWY_TAG_REGEX.findall(text)
+    tags = {m[2] for m in matches if not WORKFLOWY_NOT_TAG_REGEX.match(m[2])}
+    tags = {tag.lower() for tag in tags}
+    return tags
+
+
 # Extracting microstuff
 #
+MICROSTUFF_TAG_NAME = "microstuff"
+
+
 @dataclass
 class Microstuff:
-    time: date
+    time: datetime
     value: float
     comment: Optional[str]
 
 
-def extract_microstuff(items: Dict[UUID, WorkflowyItem], root_uuid: UUID) -> List[Microstuff]:
-    if root_uuid not in items:
-        print(f"Warning: {root_uuid} not found in workflowy tree")
-        return []
+def find_microstuff_roots(items: Dict[UUID, WorkflowyItem]) -> List[WorkflowyItem]:
+    """Find all items that have a #microstuff tag"""
+    return [item for item in items.values() if MICROSTUFF_TAG_NAME in item.tags]
 
-    # Find all descendants of root data contain a date,
-    # then find all descendants of these date-items that contain a number
-    root = items[root_uuid]
+
+def extract_microstuff(root_item: WorkflowyItem) -> List[Microstuff]:
+    # Find all descendants of root that contain a date, then find all descendants of these date-items that contain a
+    # number
     microstuffs = []
-
-    root_descendants = root.children.copy()
+    root_descendants = root_item.children.copy()
     while len(root_descendants):
         item = root_descendants.pop()
-        date_ = parse_date(item.text)
+        date_ = parse_datetime(item.text)
 
         # Go deeper if that item does not contain a date
         if not date_:
@@ -190,7 +210,7 @@ def extract_microstuff(items: Dict[UUID, WorkflowyItem], root_uuid: UUID) -> Lis
     return microstuffs
 
 
-def parse_date(item_text: str) -> Optional[date]:
+def parse_datetime(item_text: str) -> Optional[datetime]:
     if not item_text:
         return
 
@@ -206,11 +226,23 @@ def parse_date(item_text: str) -> Optional[date]:
     if time_elem is None:
         return
 
-    return date(
+    return datetime(
         year=int(time_elem.get("startyear")),
         month=int(time_elem.get("startmonth")),
         day=int(time_elem.get("startday")),
+        # Represent pure dates as midnight
+        hour=maybe_int(time_elem.get("starthour")) or 0,
+        minute=maybe_int(time_elem.get("startminute")) or 0,
+        second=maybe_int(time_elem.get("startsecond")) or 0,
+        # The <time/> tag does not have any timezone information
+        tzinfo=ZoneInfo("Europe/Berlin"),
     )
+
+
+def maybe_int(string: Optional[str]) -> Optional[int]:
+    if string:
+        return int(string)
+    return None
 
 
 def parse_value_and_comment(item_text: str) -> Optional[Tuple[float, Optional[str]]]:
@@ -236,7 +268,7 @@ table_name = "microstuff"
 table = sa.Table(
     table_name,
     metadata_obj,
-    sa.Column("time", sa.Date, nullable=False),
+    sa.Column("time", sa.DateTime(timezone=True), nullable=False),
     sa.Column("name", sa.Text, nullable=False),
     sa.Column("value", sa.Float, nullable=False),
     sa.Column("comment", sa.Text, nullable=True),
@@ -257,13 +289,14 @@ def init():
 def update():
     items = get_worklfowy_items()
 
-    micromarriages = extract_microstuff(items, UUID("bcea1f2a-11e0-5a2d-99a2-569985d46b24"))
-    metric_name = "micromarriages"
+    for root_item in find_microstuff_roots(items):
+        microstuff = extract_microstuff(root_item)
+        metric_name = root_item.text.lower().replace(f"#{MICROSTUFF_TAG_NAME}", "").strip()
 
-    rows = [{"time": mm.time, "name": metric_name, "value": mm.value, "comment": mm.comment} for mm in micromarriages]
-    with db_engine.begin() as conn:
-        conn.execute(sa.delete(table).where(table.c.name == metric_name))
-        conn.execute(sa.insert(table), rows)
+        rows = [{"time": ms.time, "name": metric_name, "value": ms.value, "comment": ms.comment} for ms in microstuff]
+        with db_engine.begin() as conn:
+            conn.execute(sa.delete(table).where(table.c.name == metric_name))
+            conn.execute(sa.insert(table), rows)
 
 
 if __name__ == "__main__":

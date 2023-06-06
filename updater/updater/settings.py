@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Tells sqlalchemy to log all sql statements
     ECHO_SQL: bool = Field(False, env=["ECHO_SQL", "LOG_SQL"])
 
+    # Enable request caching (in some cases) for development
+    CACHE_REQUESTS: bool = False
+
     AGSI_API_KEY: str
     WORKFLOWY_SESSION_ID: str
 

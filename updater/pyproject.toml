@@ -16,10 +16,14 @@ APScheduler = "^3.9.1"
 typer = "^0.7.0"
 psycopg2-binary = "^2.9.5"
 lxml = "^4.9.2"
+regex = "^2023.6.3"
 
 [tool.poetry.dev-dependencies]
 black = "^22.12.0"
 sqlalchemy2-stubs = "^0.0.2-alpha.32"
+joblib = "^1.2.0"
+
+[tool.poetry.group.dev.dependencies]
 joblib = "^1.2.0"
 
 [build-system]
