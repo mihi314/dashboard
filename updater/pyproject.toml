@@ -23,9 +23,6 @@ black = "^22.12.0"
 sqlalchemy2-stubs = "^0.0.2-alpha.32"
 joblib = "^1.2.0"
 
-[tool.poetry.group.dev.dependencies]
-joblib = "^1.2.0"
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
