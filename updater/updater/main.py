@@ -8,7 +8,7 @@ import typer
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 
-from updater import boulderwelt, gas_storage, workflowy
+from updater import boulderwelt, gas_storage, workflowy, nergie
 
 
 timezone = pytz.timezone("Europe/Berlin")
@@ -38,6 +38,7 @@ def main(print_jobs: bool = False):
     boulderwelt.init()
     gas_storage.init()
     workflowy.init()
+    nergie.init()
 
     # Schedule
     scheduler = BackgroundScheduler(timezone=timezone, executors={"default": ThreadPoolExecutor(max_workers=10)})
@@ -45,6 +46,7 @@ def main(print_jobs: bool = False):
     scheduler.add_job(make_job(boulderwelt.update, "boulderwelt"), "cron", minute="*/5", second="10")
     scheduler.add_job(make_job(gas_storage.update, "gas_storage"), "cron", hour="23", minute="30")
     scheduler.add_job(make_job(workflowy.update, "workflowy"), "cron", hour="3", minute="0")
+    scheduler.add_job(make_job(nergie.update, "nergie"), "cron", hour="4", minute="0")
     # scheduler.add_job(make_job(test_job, "test_job"), "cron", second="*/10")
 
     scheduler.start()
