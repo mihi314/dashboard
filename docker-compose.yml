@@ -34,6 +34,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${DASH_GF_SECURITY_ADMIN_PASSWORD:?err}
       - GF_SERVER_DOMAIN=${DASH_DOMAIN:-localhost}
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/
       - DASH_PGPASSWORD_GRAFANA=${DASH_PGPASSWORD_GRAFANA:?err}
       - GF_DATE_FORMATS_FULL_DATE=dd DD.MM.YYYY HH:mm:ss
       - GF_DATE_FORMATS_INTERVAL_SECOND=HH:mm:ss
