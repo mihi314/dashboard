@@ -33,11 +33,11 @@ class ProjectTreeData(BaseModel):
 
 class MainProjectTreeInfo(BaseModel):
     # root node when viewing a shared project, otherwise null
-    rootProject: Optional[Node]
+    rootProject: Optional[Node] = None
     rootProjectChildren: List[Node]
     # all "lm" attributes in rootProjectChildren are relative to this timestamp
     dateJoinedTimestampInSeconds: int
-    auxiliaryProjectTreeInfos: Optional[List[MainProjectTreeInfo]]
+    auxiliaryProjectTreeInfos: Optional[List[MainProjectTreeInfo]] = None
 
 
 class Node(BaseModel):
@@ -45,29 +45,29 @@ class Node(BaseModel):
     # name
     nm: str
     # notes
-    no: Optional[str]
+    no: Optional[str] = None
     # created
     ct: int
     # last modified
     lm: int
     # completed at
-    cp: Optional[int]
+    cp: Optional[int] = None
     # children
-    ch: Optional[List[Node]]
+    ch: Optional[List[Node]] = None
     metadata: NodeMetadata
 
 
 class NodeMetadata(BaseModel):
-    mirror: Optional[Dict]
-    originalId: Optional[UUID]
-    isVirtualRoot: Optional[bool]
-    virtualRootIds: Optional[Dict[UUID, bool]]
+    mirror: Optional[Dict] = None
+    originalId: Optional[UUID] = None
+    isVirtualRoot: Optional[bool] = None
+    virtualRootIds: Optional[Dict[UUID, bool]] = None
 
 
-WorkflowyData.update_forward_refs()
-MainProjectTreeInfo.update_forward_refs()
-ProjectTreeData.update_forward_refs()
-Node.update_forward_refs()
+WorkflowyData.model_rebuild()
+MainProjectTreeInfo.model_rebuild()
+ProjectTreeData.model_rebuild()
+Node.model_rebuild()
 
 
 @dataclass
@@ -86,7 +86,7 @@ class WorkflowyItem:
 def get_worklfowy_items() -> Dict[UUID, WorkflowyItem]:
     request = requests_get(DATA_URL, headers={"cookie": f"sessionid={settings.WORKFLOWY_SESSION_ID}"})
     request.raise_for_status()
-    data = WorkflowyData.parse_raw(request.text)
+    data = WorkflowyData.model_validate_json(request.text)
     return flatten_tree(data)
 
 

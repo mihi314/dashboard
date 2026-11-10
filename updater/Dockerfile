@@ -1,20 +1,21 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.14-slim-trixie
+
+COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /uvx /bin/
 
 WORKDIR /app
 
-RUN pip install poetry==1.4.2
-
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
     PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    PATH="/app/.venv/bin:$PATH"
 
-COPY poetry.lock pyproject.toml /app/
-RUN poetry install --without dev --no-root \
- && rm -rf /root/.cache/pypoetry
+COPY uv.lock pyproject.toml .python-version /app/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
 COPY . .
 
-CMD ["poetry", "run", "python", "updater/main.py", "--print-jobs"]
+CMD ["python", "updater/main.py", "--print-jobs"]

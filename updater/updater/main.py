@@ -1,8 +1,8 @@
 import time
-import pytz
 import functools
 from datetime import datetime
 from typing import Callable
+from zoneinfo import ZoneInfo
 
 import typer
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -11,7 +11,7 @@ from apscheduler.executors.pool import ThreadPoolExecutor
 from updater import boulderwelt, gas_storage, workflowy, nergie
 
 
-timezone = pytz.timezone("Europe/Berlin")
+timezone = ZoneInfo("Europe/Berlin")
 
 
 def make_job(update: Callable, name: str):

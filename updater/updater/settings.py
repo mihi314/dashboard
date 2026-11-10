@@ -1,5 +1,6 @@
 from typing import Literal, Optional
-from pydantic import BaseSettings, Field, FilePath
+from pydantic import AliasChoices, Field, FilePath
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -11,7 +12,7 @@ class Settings(BaseSettings):
     DASH_PGPASSWORD: str
 
     # Tells sqlalchemy to log all sql statements
-    ECHO_SQL: bool = Field(False, env=["ECHO_SQL", "LOG_SQL"])
+    ECHO_SQL: bool = Field(False, validation_alias=AliasChoices("ECHO_SQL", "LOG_SQL"))
 
     # Enable request caching (in some cases) for development
     CACHE_REQUESTS: bool = False

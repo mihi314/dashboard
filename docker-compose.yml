@@ -1,8 +1,8 @@
-version: "3.8"
-
 volumes:
   grafana-storage:
+  # Postgres 15 data, no longer used since the upgrade to Postgres 18. Kept around for rolling back.
   pgdata:
+  pgdata2:
   certs:
   acme.sh-state:
   acme.sh-webroot:
@@ -68,7 +68,8 @@ services:
       - -c
       - log_statement=${DASH_PG_LOGLEVEL:-none}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # Since Postgres 18 the data lives in a version-specific subdirectory (/var/lib/postgresql/18/docker)
+      - pgdata2:/var/lib/postgresql
     restart: unless-stopped
     environment:
       # For creating the inital database
@@ -104,7 +105,7 @@ services:
 
   # refreshes the letsencrypt certificate every 60 days
   acme.sh:
-    image: neilpang/acme.sh:2.8.8
+    image: neilpang/acme.sh:3.1.5
     command: daemon
     volumes:
       # these paths are tightly coupled with the generate-initial-ssl-cert task

@@ -19,10 +19,10 @@ def make_db_url() -> sa.engine.URL:
 
 
 def create_engine(echo_sql: bool = settings.ECHO_SQL) -> sa.engine.Engine:
-    return sa.create_engine(make_db_url(), echo=echo_sql, future=True)
+    return sa.create_engine(make_db_url(), echo=echo_sql)
 
 
 def create_sessionmaker(bind: Union[sa.engine.Connection, sa.engine.Engine, None] = None) -> sessionmaker[Session]:
     if not bind:
         bind = create_engine()
-    return sessionmaker(bind=bind, autocommit=False, future=True)
+    return sessionmaker(bind=bind)

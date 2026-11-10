@@ -12,7 +12,7 @@ datasources:
       password: $DASH_PGPASSWORD_GRAFANA
     jsonData:
       sslmode: disable # disable/require/verify-ca/verify-full
-      maxOpenConns: 0
+      maxOpenConns: 100 # 0 (unlimited) is not supported anymore by the pgx driver
       maxIdleConns: 2
       connMaxLifetime: 14400
       postgresVersion: 1500 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10

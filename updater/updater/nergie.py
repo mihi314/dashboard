@@ -19,10 +19,10 @@ class NearestBus(BaseModel):
 
 
 class Response(BaseModel):
-    rating: Optional[str]
+    rating: Optional[str] = None
     message: str
-    distance: Optional[float]
-    nearestBus: Optional[NearestBus]
+    distance: Optional[float] = None
+    nearestBus: Optional[NearestBus] = None
 
 
 def make_request(request) -> Response:
@@ -30,7 +30,7 @@ def make_request(request) -> Response:
     data = {"lat": request.lat, "lon": request.lon, "type": request.type, "powerInKW": request.power_kW}
     response = requests.post(url, json=data)
     response.raise_for_status()
-    return Response.parse_raw(response.text)
+    return Response.model_validate_json(response.text)
 
 
 # Storage
