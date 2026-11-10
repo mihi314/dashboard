@@ -18,9 +18,20 @@ dependencies = [
     "tzdata>=2025.2",
 ]
 
+[project.scripts]
+updater = "updater.main:cli"
+
 [dependency-groups]
 dev = [
     "black>=26.1",
     "joblib>=1.5",
     "ipython>=9.0",
 ]
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# The package lives in updater/ instead of src/updater/
+module-root = ""

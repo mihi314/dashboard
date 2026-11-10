@@ -9,7 +9,6 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never \
     PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
     PATH="/app/.venv/bin:$PATH"
 
 COPY uv.lock pyproject.toml .python-version /app/
@@ -17,5 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
 COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-editable
 
-CMD ["python", "updater/main.py", "--print-jobs"]
+CMD ["updater", "--print-jobs"]

@@ -4,7 +4,7 @@ from typing import Union
 
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker, Session
-from settings import settings
+from updater.settings import settings
 
 
 def make_db_url() -> sa.engine.URL:
