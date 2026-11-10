@@ -1,0 +1,17 @@
+# systemd user unit. Install with:
+#   mkdir -p ~/.config/systemd/user && cp mpi.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now mpi
+#   sudo loginctl enable-linger $USER  # keep running without a login session
+[Unit]
+Description=Push BLE sensor readings to the dashboard
+After=network-online.target bluetooth.target
+
+[Service]
+# Settings are read from .env in the working directory
+WorkingDirectory=%h/dashboard/integrations/mpi
+ExecStart=%h/.local/bin/uv run --frozen --no-dev mpi
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

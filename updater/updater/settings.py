@@ -20,5 +20,8 @@ class Settings(BaseSettings):
     AGSI_API_KEY: str
     WORKFLOWY_SESSION_ID: str
 
+    # Bearer token required by the ingest API
+    DASH_INGEST_TOKEN: str
+
 
 settings = Settings()  # pyright: ignore

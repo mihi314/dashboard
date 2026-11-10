@@ -21,6 +21,10 @@ services:
       - DASH_PGPASSWORD=${DASH_PGPASSWORD:?err}
       - AGSI_API_KEY=${AGSI_API_KEY:?err}
       - WORKFLOWY_SESSION_ID=${WORKFLOWY_SESSION_ID:?err}
+      - DASH_INGEST_TOKEN=${DASH_INGEST_TOKEN:?err}
+    # Ingest API, only reachable from within the compose network (publicly via nginx)
+    expose:
+      - 8000
     depends_on:
       - postgres
 
@@ -96,6 +100,8 @@ services:
     environment:
       - GRAFANA_HOST=grafana
       - GRAFANA_PORT=3000
+      - INGEST_HOST=updater
+      - INGEST_PORT=8000
       - DOMAIN=${DASH_DOMAIN:-localhost}
     ports:
       - 4080:80

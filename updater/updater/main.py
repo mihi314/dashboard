@@ -5,10 +5,11 @@ from typing import Callable
 from zoneinfo import ZoneInfo
 
 import typer
+import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 
-from updater import boulderwelt, gas_storage, workflowy, nergie
+from updater import api, boulderwelt, climate, gas_storage, workflowy, nergie
 
 
 timezone = ZoneInfo("Europe/Berlin")
@@ -39,6 +40,7 @@ def main(print_jobs: bool = False):
     gas_storage.init()
     workflowy.init()
     nergie.init()
+    climate.init()
 
     # Schedule
     scheduler = BackgroundScheduler(timezone=timezone, executors={"default": ThreadPoolExecutor(max_workers=10)})
@@ -54,12 +56,11 @@ def main(print_jobs: bool = False):
     if print_jobs:
         scheduler.print_jobs()
 
-    try:
-        while True:
-            time.sleep(100)
-    except KeyboardInterrupt:
-        print("Shutting down")
-        scheduler.shutdown()
+    # Serve the ingest API in the main thread while the scheduler runs in the background. Blocks until SIGINT/SIGTERM.
+    uvicorn.run(api.app, host="0.0.0.0", port=8000)
+
+    print("Shutting down")
+    scheduler.shutdown()
 
 
 def cli():

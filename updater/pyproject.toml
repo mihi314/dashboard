@@ -16,6 +16,8 @@ dependencies = [
     "lxml>=6.1",
     "regex>=2026.1.1",
     "tzdata>=2025.2",
+    "fastapi>=0.162",
+    "uvicorn>=0.54",
 ]
 
 [project.scripts]

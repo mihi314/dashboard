@@ -70,4 +70,18 @@ server {
         proxy_set_header Connection $connection_upgrade;
         proxy_set_header Host $http_host;
     }
+
+    # ingest API of the updater
+    location /ingest/ {
+        # Resolve the upstream lazily via docker's DNS (only works when using a variable in proxy_pass). Otherwise
+        # nginx (and with it grafana) would fail to start while the updater container is down.
+        resolver 127.0.0.11 valid=30s;
+        set $ingest_upstream http://${INGEST_HOST}:${INGEST_PORT};
+        proxy_pass $ingest_upstream;
+
+        client_max_body_size 1m;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Host $http_host;
+    }
 }

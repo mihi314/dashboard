@@ -1,0 +1,24 @@
+[project]
+name = "mpi"
+version = "0.1.0"
+description = "Pushes readings of BLE sensors next to the Raspberry Pi to the dashboard's ingest API"
+authors = [{ name = "Michael Engelhard", email = "engelhard.michael+git@gmail.com" }]
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "apscheduler>=3.11,<4",
+    "pydantic-settings>=2.16.2",
+    "requests>=2.34.2",
+    "thermopro-ble>=1.1.4",
+    "typer>=0.27.3",
+]
+
+[project.scripts]
+mpi = "mpi.main:cli"
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# The package lives in mpi/ instead of src/mpi/
+module-root = ""
