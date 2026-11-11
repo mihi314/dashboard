@@ -6,11 +6,11 @@ datasources:
     isDefault: true
     type: postgres
     url: postgres:5432
-    database: dashboard
     user: grafana
     secureJsonData:
       password: $DASH_PGPASSWORD_GRAFANA
     jsonData:
+      database: dashboard
       sslmode: disable # disable/require/verify-ca/verify-full
       maxOpenConns: 100 # 0 (unlimited) is not supported anymore by the pgx driver
       maxIdleConns: 2
