@@ -1,4 +1,4 @@
-FROM grafana/grafana-oss:12.4.3
+FROM grafana/grafana:12.4.16
 
 COPY datasources/postgres.yaml "$GF_PATHS_PROVISIONING/datasources"
 
